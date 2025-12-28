@@ -5,6 +5,7 @@ import 'features/auth/auth_providers.dart';
 import 'features/auth/login_screen.dart';
 import 'features/home/home_screen.dart';
 import 'core/theme/app_theme.dart';
+import 'features/auth/verify_email.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,9 +35,13 @@ class CineLedgerApp extends StatelessWidget {
             data: (user) {
               if (user == null) {
                 return const LoginScreen();
-              } else {
-                return const HomeScreen();
               }
+
+              if (!user.emailVerified) {
+                return VerifyEmailScreen(email: user.email ?? '');
+              }
+
+              return const HomeScreen();
             },
           );
         },

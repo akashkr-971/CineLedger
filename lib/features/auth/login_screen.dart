@@ -1,71 +1,275 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'auth_providers.dart';
+import 'signup_screen.dart';
+import '../../core/widgets/cine_input_field.dart';
+import '../../core/widgets/cine_snack_bar.dart';
+import 'verify_email.dart';
 
 class LoginScreen extends ConsumerWidget {
   const LoginScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final authService = ref.read(authServiceProvider);
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final authService = ref.read(authServiceProvider);
+    final emailController = TextEditingController();
+    final passwordController = TextEditingController();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('CineLedger'),
-        centerTitle: true,
-        backgroundColor: colors.surface,
-      ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Welcome to CineLedger',
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: colors.onSurface,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Track, rate, and remember every movie you watch',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 40),
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/film_roll.png',
+              fit: BoxFit.cover,
+            ),
+          ),
 
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.login),
-                  label: const Text('Sign in with Google'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colors.primary,
-                    foregroundColor: colors.onPrimary,
-                    minimumSize: const Size.fromHeight(52),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+          Positioned.fill(
+            child: Container(color: Colors.black.withValues(alpha: 0.45)),
+          ),
+          SafeArea(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight,
+                    ),
+                    child: IntrinsicHeight(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: Column(
+                          children: [
+                            const SizedBox(height: 60),
+
+                            // 🔹 Logo
+                            Image.asset(
+                              'assets/logo/cineledger_bg_remove.png',
+                              height: 240,
+                            ),
+
+                            const SizedBox(height: 40),
+
+                            CineInputField(
+                              hint: 'Email',
+                              icon: Icons.email_outlined,
+                              controller: emailController,
+                            ),
+                            const SizedBox(height: 16),
+
+                            CineInputField(
+                              hint: 'Password',
+                              icon: Icons.lock_outline,
+                              isPassword: true,
+                              controller: passwordController,
+                            ),
+
+                            const SizedBox(height: 32),
+
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: colors.secondary,
+                                  foregroundColor: Colors.black,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                ),
+                                onPressed: () async {
+                                  final email = emailController.text.trim();
+                                  final password =
+                                      passwordController.text.trim();
+
+                                  if (email.isEmpty || password.isEmpty) {
+                                    CineSnack.error(
+                                      context,
+                                      'Please enter both email and password',
+                                    );
+                                    return;
+                                  }
+
+                                  try {
+                                    await authService
+                                        .signInWithEmailAndPassword(
+                                          email: email,
+                                          password: password,
+                                        );
+
+                                    if (!context.mounted) return;
+
+                                    final user = authService.currentUser;
+
+                                    if (user != null && !user.emailVerified) {
+                                      CineSnack.warning(
+                                        context,
+                                        'Please verify your email before logging in.',
+                                      );
+
+                                      await Future.delayed(
+                                        const Duration(seconds: 3),
+                                      );
+                                      if (!context.mounted) return;
+                                      Navigator.of(context).pushReplacement(
+                                        MaterialPageRoute(
+                                          builder:
+                                              (_) => VerifyEmailScreen(
+                                                email: email,
+                                              ),
+                                        ),
+                                      );
+                                      return;
+                                    }
+
+                                    CineSnack.success(
+                                      context,
+                                      'Login successful',
+                                    );
+                                  } catch (e) {
+                                    if (!context.mounted) return;
+
+                                    CineSnack.error(
+                                      context,
+                                      'Login failed. Please check your credentials.',
+                                    );
+                                  }
+                                },
+
+                                child: const Text(
+                                  'Log In',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            TextButton(
+                              onPressed: () {
+                                final email = emailController.text.trim();
+                                if (email.isEmpty) {
+                                  CineSnack.error(
+                                    context,
+                                    'Please enter your email to reset password',
+                                  );
+                                  return;
+                                }
+                                if (!email.contains('@') ||
+                                    !email.contains('.')) {
+                                  CineSnack.error(
+                                    context,
+                                    'Invalid email address',
+                                  );
+                                  return;
+                                }
+                              },
+                              child: const Text(
+                                'Forgot Password?',
+                                style: TextStyle(color: Colors.white70),
+                              ),
+                            ),
+
+                            const SizedBox(height: 24),
+
+                            Row(
+                              children: const [
+                                Expanded(child: Divider(color: Colors.white24)),
+                                Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 12),
+                                  child: Text(
+                                    'Or log in or Sign Up with',
+                                    style: TextStyle(color: Colors.white70),
+                                  ),
+                                ),
+                                Expanded(child: Divider(color: Colors.white24)),
+                              ],
+                            ),
+
+                            const SizedBox(height: 20),
+
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: Colors.black,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                ),
+                                icon: Image.asset(
+                                  'assets/logo/google.png',
+                                  height: 20,
+                                ),
+                                label: const Text(
+                                  'Continue with Google',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                onPressed: () async {
+                                  try {
+                                    await authService.signInWithGoogle();
+                                  } catch (e) {
+                                    if (!context.mounted) return;
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text(e.toString())),
+                                    );
+                                  }
+                                },
+                              ),
+                            ),
+                            const Spacer(),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Text(
+                                  'New user? ',
+                                  style: TextStyle(color: Colors.white70),
+                                ),
+                                GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder:
+                                            (context) => const SignUpScreen(),
+                                      ),
+                                    );
+                                  },
+                                  child: const Text(
+                                    'Sign Up',
+                                    style: TextStyle(
+                                      color: Color(0xFFFBBF24),
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(height: 40),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
-                  onPressed: () async {
-                    try {
-                      await authService.signInWithGoogle();
-                    } catch (e) {
-                      ScaffoldMessenger.of(
-                        context,
-                      ).showSnackBar(SnackBar(content: Text(e.toString())));
-                    }
-                  },
-                ),
-              ),
-            ],
+                );
+              },
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

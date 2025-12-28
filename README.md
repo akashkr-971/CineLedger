@@ -171,4 +171,3 @@ Feel free to:
 This project is currently not licensed for commercial use.
 
 License details will be added once the project stabilizes.
-
