@@ -3,11 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/widgets/cine_snack_bar.dart';
 import '../home/home_screen.dart';
+import '../repositories/user_repository.dart';
 
 class VerifyEmailScreen extends ConsumerStatefulWidget {
   final String email;
-
-  const VerifyEmailScreen({super.key, required this.email});
+  final String name;
+  const VerifyEmailScreen({super.key, required this.email, required this.name});
 
   @override
   ConsumerState<VerifyEmailScreen> createState() => _VerifyEmailScreenState();
@@ -31,18 +32,36 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
   }
 
   Future<void> _checkVerification() async {
-    await user?.reload();
+    final user = FirebaseAuth.instance.currentUser;
 
-    if (FirebaseAuth.instance.currentUser?.emailVerified ?? false) {
-      if (!mounted) return;
+    if (user == null) return;
 
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-        (_) => false,
-      );
+    await user.reload();
+
+    final isVerified =
+        FirebaseAuth.instance.currentUser?.emailVerified ?? false;
+    if (!mounted) return;
+    if (isVerified) {
+      try {
+        final repo = UserRepository();
+        await repo.createOrUpdateUserFromAuth(fallbackName: widget.name);
+
+        if (!mounted) return;
+
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+          (_) => false,
+        );
+      } catch (e) {
+        if (!mounted) return;
+
+        CineSnack.error(
+          context,
+          'Failed to save user profile. Please try again.',
+        );
+      }
     } else {
-      if (!mounted) return;
       CineSnack.warning(
         context,
         'Email not verified yet. Please check your inbox.',

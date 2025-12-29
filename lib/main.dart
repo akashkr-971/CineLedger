@@ -38,7 +38,10 @@ class CineLedgerApp extends StatelessWidget {
               }
 
               if (!user.emailVerified) {
-                return VerifyEmailScreen(email: user.email ?? '');
+                return VerifyEmailScreen(
+                  email: user.email ?? '',
+                  name: user.displayName ?? '',
+                );
               }
 
               return const HomeScreen();

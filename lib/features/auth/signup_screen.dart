@@ -30,7 +30,7 @@ class SignUpScreen extends ConsumerWidget {
             ),
           ),
           Positioned.fill(
-            child: Container(color: Colors.black.withOpacity(0.55)),
+            child: Container(color: Colors.black.withValues(alpha: 0.55)),
           ),
 
           SafeArea(
@@ -160,8 +160,10 @@ class SignUpScreen extends ConsumerWidget {
                                       context,
                                       MaterialPageRoute(
                                         builder:
-                                            (context) =>
-                                                VerifyEmailScreen(email: email),
+                                            (context) => VerifyEmailScreen(
+                                              email: email,
+                                              name: name,
+                                            ),
                                       ),
                                     );
                                   } catch (e) {

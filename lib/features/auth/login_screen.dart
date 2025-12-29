@@ -5,6 +5,7 @@ import 'signup_screen.dart';
 import '../../core/widgets/cine_input_field.dart';
 import '../../core/widgets/cine_snack_bar.dart';
 import 'verify_email.dart';
+import '../repositories/user_repository.dart';
 
 class LoginScreen extends ConsumerWidget {
   const LoginScreen({super.key});
@@ -121,6 +122,7 @@ class LoginScreen extends ConsumerWidget {
                                           builder:
                                               (_) => VerifyEmailScreen(
                                                 email: email,
+                                                name: user.displayName ?? '',
                                               ),
                                         ),
                                       );
@@ -220,11 +222,31 @@ class LoginScreen extends ConsumerWidget {
                                 ),
                                 onPressed: () async {
                                   try {
-                                    await authService.signInWithGoogle();
+                                    final credential =
+                                        await authService.signInWithGoogle();
+
+                                    final user = credential.user;
+                                    if (user == null) return;
+
+                                    // 🔥 Store user in Firestore
+                                    final repo = UserRepository();
+                                    await repo.createOrUpdateUserFromAuth();
+
+                                    if (!context.mounted) return;
+
+                                    CineSnack.success(
+                                      context,
+                                      'Logged in successfully',
+                                    );
+
+                                    // 🚫 No navigation here
+                                    // Auth-state router will move to HomeScreen
                                   } catch (e) {
                                     if (!context.mounted) return;
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text(e.toString())),
+
+                                    CineSnack.error(
+                                      context,
+                                      'Google sign-in failed. Please try again.',
                                     );
                                   }
                                 },
