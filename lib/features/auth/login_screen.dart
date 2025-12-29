@@ -154,7 +154,7 @@ class LoginScreen extends ConsumerWidget {
                             ),
 
                             TextButton(
-                              onPressed: () {
+                              onPressed: () async {
                                 final email = emailController.text.trim();
                                 if (email.isEmpty) {
                                   CineSnack.error(
@@ -167,9 +167,29 @@ class LoginScreen extends ConsumerWidget {
                                     !email.contains('.')) {
                                   CineSnack.error(
                                     context,
-                                    'Invalid email address',
+                                    'Please enter a valid email address',
                                   );
                                   return;
+                                }
+                                try {
+                                  await authService.sendPasswordResetEmail(
+                                    email,
+                                  );
+
+                                  if (!context.mounted) return;
+
+                                  CineSnack.success(
+                                    context,
+                                    'If an account exists, a password reset link has been sent.',
+                                  );
+                                } catch (e) {
+                                  if (!context.mounted) return;
+
+                                  // ⚠️ Do NOT expose exact errors (security)
+                                  CineSnack.success(
+                                    context,
+                                    'If an account exists, a password reset link has been sent.',
+                                  );
                                 }
                               },
                               child: const Text(
@@ -227,8 +247,6 @@ class LoginScreen extends ConsumerWidget {
 
                                     final user = credential.user;
                                     if (user == null) return;
-
-                                    // 🔥 Store user in Firestore
                                     final repo = UserRepository();
                                     await repo.createOrUpdateUserFromAuth();
 
@@ -238,9 +256,6 @@ class LoginScreen extends ConsumerWidget {
                                       context,
                                       'Logged in successfully',
                                     );
-
-                                    // 🚫 No navigation here
-                                    // Auth-state router will move to HomeScreen
                                   } catch (e) {
                                     if (!context.mounted) return;
 

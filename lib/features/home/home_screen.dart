@@ -1,43 +1,79 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/theme/theme_provider.dart';
+import 'user_profile_provider.dart';
+import 'tabs/home_tab.dart';
+import 'tabs/search_tab.dart';
+import 'tabs/recommendations_tab.dart';
+import 'tabs/profile_tab.dart';
 
-import '../auth/auth_providers.dart';
+// ✅ Local-only provider
+final homeTabProvider = StateProvider<int>((ref) => 0);
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final authService = ref.read(authServiceProvider);
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final currentTab = ref.watch(homeTabProvider);
+    final profileAsync = ref.watch(userProfileProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('CineLedger'),
-        backgroundColor: colors.surface,
+        centerTitle: true,
+        title: const Text(
+          'CineLedger',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await authService.signOut();
+            icon: const Icon(Icons.brightness_6_outlined),
+            onPressed: () {
+              ref.read(themeModeProvider.notifier).toggleTheme();
             },
           ),
         ],
       ),
-      body: Center(
-        child: Text(
-          'You are logged in 🎬',
-          style: theme.textTheme.titleMedium?.copyWith(color: colors.onSurface),
-        ),
+
+      body: IndexedStack(
+        index: currentTab,
+        children: [
+          HomeTab(profileAsync: profileAsync),
+          const SearchTab(),
+          const RecommendationsTab(),
+          const ProfileTab(),
+        ],
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: colors.primary,
-        foregroundColor: colors.onPrimary,
-        onPressed: () {
-          // Next: Add Movie
+
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: currentTab,
+        onTap: (index) {
+          ref.read(homeTabProvider.notifier).state = index;
         },
-        child: const Icon(Icons.add),
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: colors.primary,
+        unselectedItemColor: colors.onSurface.withOpacity(0.6),
+        backgroundColor: colors.surface,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.search_outlined),
+            label: 'Search',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.auto_awesome_outlined),
+            label: 'For You',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            label: 'Profile',
+          ),
+        ],
       ),
     );
   }
