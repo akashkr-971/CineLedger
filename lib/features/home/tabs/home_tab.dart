@@ -44,7 +44,7 @@ class HomeTab extends StatelessWidget {
             '“Every movie you watch becomes a memory.”',
             style: theme.textTheme.bodyMedium?.copyWith(
               fontStyle: FontStyle.italic,
-              color: colors.onSurface.withOpacity(0.7),
+              color: colors.onSurface.withValues(alpha: 0.7),
             ),
           ),
 
@@ -59,12 +59,15 @@ class HomeTab extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(Icons.search, color: colors.onSurface.withOpacity(0.54)),
+                Icon(
+                  Icons.search,
+                  color: colors.onSurface.withValues(alpha: 0.54),
+                ),
                 const SizedBox(width: 12),
                 Text(
                   'Search movies or series',
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colors.onSurface.withOpacity(0.54),
+                    color: colors.onSurface.withValues(alpha: 0.54),
                   ),
                 ),
               ],
@@ -99,7 +102,7 @@ class HomeTab extends StatelessWidget {
                     child: Text(
                       'Movie',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: colors.onSurface.withOpacity(0.6),
+                        color: colors.onSurface.withValues(alpha: 0.6),
                       ),
                     ),
                   ),

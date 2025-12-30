@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/theme/theme_provider.dart';
+import '../user_profile_provider.dart';
 
 class ProfileTab extends ConsumerWidget {
   const ProfileTab({super.key});
@@ -11,27 +12,65 @@ class ProfileTab extends ConsumerWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final user = FirebaseAuth.instance.currentUser;
+    final profileAsync = ref.watch(userProfileProvider);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          RichText(
+            text: TextSpan(
+              text: 'Cine',
+              style: theme.textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: colors.primary,
+              ),
+              children: [
+                TextSpan(
+                  text: 'Ledger',
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colors.secondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 32),
+
           // 👤 Avatar
           CircleAvatar(
             radius: 42,
-            backgroundColor: colors.primary.withOpacity(0.15),
+            backgroundColor: colors.primary.withValues(alpha: 0.15),
             child: Icon(Icons.person_outline, size: 40, color: colors.primary),
           ),
 
           const SizedBox(height: 16),
 
           // 👤 Name
-          Text(
-            user?.displayName ?? 'CineLedger User',
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                profileAsync.when(
+                  loading: () => 'User',
+                  error: (_, __) => 'User',
+                  data: (profile) => profile['name'] ?? 'User',
+                ),
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(width: 6),
+              GestureDetector(
+                onTap: () {
+                  
+                },
+                child: Icon(Icons.edit, color: colors.primary, size: 20),
+              ),
+            ],
           ),
 
           const SizedBox(height: 6),
@@ -40,8 +79,27 @@ class ProfileTab extends ConsumerWidget {
           Text(
             user?.email ?? '',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: colors.onSurface.withOpacity(0.6),
+              color: colors.onSurface.withValues(alpha: 0.6),
             ),
+          ),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                "Joined On : ",
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colors.onSurface.withValues(alpha: 0.6),
+                ),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                user?.metadata.creationTime.toString().split(' ').first ?? '',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colors.onSurface.withValues(alpha: 0.6),
+                ),
+              ),
+            ],
           ),
 
           const SizedBox(height: 32),
@@ -71,6 +129,14 @@ class ProfileTab extends ConsumerWidget {
           const SizedBox(height: 12),
 
           _ProfileTile(
+            icon: Icons.bookmark_border,
+            title: 'Watchlist',
+            onTap: () {
+              ref.read(themeModeProvider.notifier).toggleTheme();
+            },
+          ),
+
+          _ProfileTile(
             icon: Icons.brightness_6_outlined,
             title: 'Toggle Theme',
             onTap: () {
@@ -79,12 +145,30 @@ class ProfileTab extends ConsumerWidget {
           ),
 
           _ProfileTile(
-            icon: Icons.logout,
+            icon: Icons.password,
+            title: 'Change Password',
+            isDestructive: false,
+            onTap: () async {
+              await FirebaseAuth.instance.sendPasswordResetEmail(
+                email: user?.email ?? '',
+              );
+            },
+          ),
+
+          _ProfileTile(
+            icon: Icons.logout_outlined,
             title: 'Log Out',
             isDestructive: true,
             onTap: () async {
               await FirebaseAuth.instance.signOut();
             },
+          ),
+
+          _ProfileTile(
+            icon: Icons.delete_outline,
+            title: 'Delete Account',
+            isDestructive: true,
+            onTap: () async {},
           ),
         ],
       ),
@@ -116,7 +200,7 @@ class _ProfileStat extends StatelessWidget {
         Text(
           label,
           style: theme.textTheme.bodySmall?.copyWith(
-            color: colors.onSurface.withOpacity(0.6),
+            color: colors.onSurface.withValues(alpha: 0.6),
           ),
         ),
       ],
