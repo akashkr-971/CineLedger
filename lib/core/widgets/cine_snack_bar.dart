@@ -11,6 +11,7 @@ class CineSnack {
       behavior: SnackBarBehavior.floating,
       backgroundColor: Colors.transparent,
       elevation: 0,
+      margin: const EdgeInsets.all(16),
       content: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
@@ -55,7 +56,7 @@ class CineSnack {
     _show(
       context,
       message: message,
-      color: const Color(0xFFB91C1C), // deep red
+      color: const Color(0xFFB91C1C),
       icon: Icons.error_outline,
     );
   }
@@ -65,7 +66,7 @@ class CineSnack {
     _show(
       context,
       message: message,
-      color: const Color(0xFFFBBF24), // gold
+      color: const Color(0xFFFBBF24),
       icon: Icons.warning_amber_rounded,
     );
   }
@@ -75,7 +76,7 @@ class CineSnack {
     _show(
       context,
       message: message,
-      color: const Color(0xFF16A34A), // green
+      color: const Color(0xFF16A34A),
       icon: Icons.check_circle_outline,
     );
   }

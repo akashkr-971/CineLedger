@@ -6,6 +6,7 @@ import 'tabs/home_tab.dart';
 import 'tabs/search_tab.dart';
 import 'tabs/recommendations_tab.dart';
 import 'tabs/profile_tab.dart';
+import '../movies/add_movie_sheet.dart';
 
 // ✅ Local-only provider
 final homeTabProvider = StateProvider<int>((ref) => 0);
@@ -46,6 +47,23 @@ class HomeScreen extends ConsumerWidget {
           const ProfileTab(),
         ],
       ),
+
+      floatingActionButton:
+          currentTab == 0
+              ? FloatingActionButton(
+                onPressed: () {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (_) => const AddMovieSheet(),
+                  );
+                },
+                child: const Icon(Icons.add),
+              )
+              : null,
+
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
 
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: currentTab,
