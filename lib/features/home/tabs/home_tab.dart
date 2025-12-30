@@ -110,6 +110,12 @@ class HomeTab extends StatelessWidget {
               },
             ),
           ),
+          FloatingActionButton(
+            onPressed: () {
+              // Action to add a new movie
+            },
+            child: const Icon(Icons.add),
+          ),
         ],
       ),
     );

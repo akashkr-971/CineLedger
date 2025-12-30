@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/theme/theme_provider.dart';
 import '../user_profile_provider.dart';
+import '../../repositories/user_repository.dart';
 
 class ProfileTab extends ConsumerWidget {
   const ProfileTab({super.key});
@@ -13,6 +14,49 @@ class ProfileTab extends ConsumerWidget {
     final colors = theme.colorScheme;
     final user = FirebaseAuth.instance.currentUser;
     final profileAsync = ref.watch(userProfileProvider);
+
+    Future<void> showEditNameDialog(
+      BuildContext context,
+      WidgetRef ref,
+      String currentName,
+    ) async {
+      final controller = TextEditingController(text: currentName);
+      final repo = UserRepository();
+
+      await showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Edit name'),
+            content: TextField(
+              controller: controller,
+              autofocus: true,
+              textCapitalization: TextCapitalization.words,
+              decoration: const InputDecoration(hintText: 'Enter your name'),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  final newName = controller.text.trim();
+
+                  if (newName.isEmpty) return;
+
+                  await repo.updateUserName(newName);
+
+                  if (!context.mounted) return;
+                  Navigator.pop(context);
+                },
+                child: const Text('Save'),
+              ),
+            ],
+          );
+        },
+      );
+    }
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -66,7 +110,10 @@ class ProfileTab extends ConsumerWidget {
               const SizedBox(width: 6),
               GestureDetector(
                 onTap: () {
-                  
+                  profileAsync.whenData((profile) {
+                    final currentName = profile['name'] ?? '';
+                    showEditNameDialog(context, ref, currentName);
+                  });
                 },
                 child: Icon(Icons.edit, color: colors.primary, size: 20),
               ),

@@ -25,9 +25,17 @@ class UserRepository {
               ? user.providerData.first.providerId
               : 'password',
       'updatedAt': FieldValue.serverTimestamp(),
-
-      // Only set createdAt if document does not exist
       'createdAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+  }
+
+  Future<void> updateUserName(String name) async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    await _firestore.collection('users').doc(user.uid).update({
+      'name': name,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
   }
 }
