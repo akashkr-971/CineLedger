@@ -51,7 +51,6 @@ class _AddMovieSheetState extends State<AddMovieSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Handle
             Center(
               child: Container(
                 width: 40,
@@ -72,8 +71,6 @@ class _AddMovieSheetState extends State<AddMovieSheet> {
             ),
 
             const SizedBox(height: 20),
-
-            // 🎬 Movie Title
             TextField(
               controller: titleController,
               decoration: InputDecoration(
@@ -88,7 +85,6 @@ class _AddMovieSheetState extends State<AddMovieSheet> {
 
             const SizedBox(height: 16),
 
-            // 📅 Release Date
             TextField(
               keyboardType: TextInputType.number,
               maxLength: 4,
@@ -114,7 +110,6 @@ class _AddMovieSheetState extends State<AddMovieSheet> {
 
             const SizedBox(height: 24),
 
-            // 🔍 Search button
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
