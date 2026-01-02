@@ -65,7 +65,7 @@ class _HomeSearchBarState extends State<HomeSearchBar> {
               hintText: 'Search movies or series',
               prefixIcon: Icon(
                 Icons.search,
-                color: colors.onSurface.withOpacity(0.54),
+                color: colors.onSurface.withValues(alpha: 0.54),
               ),
               filled: true,
               fillColor: colors.surface,
@@ -91,7 +91,7 @@ class _HomeSearchBarState extends State<HomeSearchBar> {
                   separatorBuilder:
                       (_, __) => Divider(
                         height: 1,
-                        color: colors.onSurface.withOpacity(0.08),
+                        color: colors.onSurface.withValues(alpha: 0.08),
                       ),
                   itemBuilder: (context, index) {
                     final movie = filteredResults[index];
@@ -128,7 +128,7 @@ class _WatchedChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: colors.secondary.withOpacity(0.15),
+        color: colors.secondary.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
