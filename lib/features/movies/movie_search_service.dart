@@ -11,8 +11,6 @@ class MovieSearchService {
     required String title,
     int? year,
   }) async {
-    print("CALLED");
-    print(_apiKey);
     final uri = Uri.parse('$_baseUrl/search/movie').replace(
       queryParameters: {
         'query': title,
@@ -20,19 +18,11 @@ class MovieSearchService {
         if (year != null) 'year': year.toString(),
       },
     );
-
-    print(uri);
-
     final response = await http.get(uri);
-    print(response.body);
-
     if (response.statusCode != 200) {
       throw Exception('Failed to fetch movie data');
     }
-
     final data = json.decode(response.body);
-    print(data);
-
     final results = data['results'] as List;
 
     if (results.isEmpty) return null;

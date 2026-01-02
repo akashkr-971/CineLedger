@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'home_search_tab.dart';
 
 class HomeTab extends StatelessWidget {
   final AsyncValue<Map<String, dynamic>> profileAsync;
@@ -49,31 +50,7 @@ class HomeTab extends StatelessWidget {
           ),
 
           const SizedBox(height: 24),
-
-          // Search bar preview
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: BoxDecoration(
-              color: colors.surface,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.search,
-                  color: colors.onSurface.withValues(alpha: 0.54),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'Search movies or series',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colors.onSurface.withValues(alpha: 0.54),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
+          const HomeSearchBar(),
           const SizedBox(height: 32),
 
           Text(
@@ -110,7 +87,6 @@ class HomeTab extends StatelessWidget {
               },
             ),
           ),
-          
         ],
       ),
     );

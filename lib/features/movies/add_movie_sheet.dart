@@ -171,7 +171,7 @@ class _AddMovieSheetState extends State<AddMovieSheet> {
                                 movieResult = result;
                               });
                               clearError();
-                              print(movieResult);
+                              debugPrint('Movie found: $movieResult');
                               debugPrint('Movie found: ${result['title']}');
                             }
                           } catch (e) {
