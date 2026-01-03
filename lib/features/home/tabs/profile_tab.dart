@@ -84,7 +84,6 @@ class ProfileTab extends ConsumerWidget {
 
           const SizedBox(height: 32),
 
-          // 👤 Avatar
           CircleAvatar(
             radius: 42,
             backgroundColor: colors.primary.withValues(alpha: 0.15),
@@ -93,7 +92,6 @@ class ProfileTab extends ConsumerWidget {
 
           const SizedBox(height: 16),
 
-          // 👤 Name
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -121,8 +119,6 @@ class ProfileTab extends ConsumerWidget {
           ),
 
           const SizedBox(height: 6),
-
-          // 📧 Email
           Text(
             user?.email ?? '',
             style: theme.textTheme.bodyMedium?.copyWith(
@@ -151,7 +147,6 @@ class ProfileTab extends ConsumerWidget {
 
           const SizedBox(height: 32),
 
-          // 📊 Stats
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: const [
@@ -162,7 +157,6 @@ class ProfileTab extends ConsumerWidget {
 
           const SizedBox(height: 32),
 
-          // ⚙️ Settings section
           Align(
             alignment: Alignment.centerLeft,
             child: Text(
