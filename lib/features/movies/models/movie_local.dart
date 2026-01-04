@@ -25,6 +25,9 @@ class MovieLocal {
   @HiveField(6)
   final bool watched;
 
+  @HiveField(7)
+  final bool inWatchlist;
+
   MovieLocal({
     required this.tmdbId,
     required this.title,
@@ -32,6 +35,47 @@ class MovieLocal {
     this.releaseYear,
     required this.rating,
     required this.note,
-    required this.watched,
-  });
+    bool? watched,
+    bool? inWatchlist,
+  }) : watched = watched ?? false,
+       inWatchlist = inWatchlist ?? false;
+
+  /// 🔁 TMDB → Local
+  factory MovieLocal.fromTmdb(Map<String, dynamic> movie) {
+    final releaseDate = movie['release_date'] ?? '';
+    final year =
+        releaseDate.isNotEmpty
+            ? int.tryParse(releaseDate.split('-').first)
+            : null;
+
+    return MovieLocal(
+      tmdbId: movie['id'],
+      title: movie['title'] ?? '',
+      posterPath: movie['poster_path'] ?? '',
+      releaseYear: year,
+      rating: 0,
+      note: '',
+      watched: false,
+      inWatchlist: true,
+    );
+  }
+
+  /// 🧠 copyWith (NOW this works)
+  MovieLocal copyWith({
+    bool? watched,
+    bool? inWatchlist,
+    double? rating,
+    String? note,
+  }) {
+    return MovieLocal(
+      tmdbId: tmdbId,
+      title: title,
+      posterPath: posterPath,
+      releaseYear: releaseYear,
+      rating: rating ?? this.rating,
+      note: note ?? this.note,
+      watched: watched ?? this.watched,
+      inWatchlist: inWatchlist ?? this.inWatchlist,
+    );
+  }
 }

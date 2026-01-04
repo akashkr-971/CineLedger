@@ -23,7 +23,22 @@ class MovieSearchService {
 
     final data = json.decode(response.body);
     final results = List<Map<String, dynamic>>.from(data['results']);
-    print(results);
+    return results;
+  }
+
+  Future<List<Map<String, dynamic>>> getPopularMovies() async {
+    final uri = Uri.parse('https://api.themoviedb.org/3/movie/popular').replace(
+      queryParameters: {'api_key': _apiKey, 'language': 'en-US', 'page': '1'},
+    );
+
+    final response = await http.get(uri);
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to fetch popular movies');
+    }
+
+    final data = json.decode(response.body);
+    final results = List<Map<String, dynamic>>.from(data['results']);
 
     return results;
   }

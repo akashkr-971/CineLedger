@@ -44,6 +44,7 @@ class MovieRepository {
       rating: rating,
       note: note ?? '',
       watched: true,
+      inWatchlist: false,
     );
 
     await _localRepo.saveMovie(localMovie);
@@ -104,9 +105,73 @@ class MovieRepository {
             rating: (data['rating'] ?? 0).toDouble(),
             note: data['note'] ?? '',
             watched: data['watched'] ?? true,
+            inWatchlist: data['inWatchlist'] ?? false,
           );
         }).toList();
 
     await localRepo.saveMovies(movies);
+  }
+
+  Future<void> addToWatchlist(MovieLocal movie) async {
+    final user = _auth.currentUser!;
+    final updated = movie.copyWith(inWatchlist: true);
+
+    await _localRepo.saveMovie(updated);
+
+    await _firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('watchlist')
+        .doc(movie.tmdbId.toString())
+        .set({
+          'tmdbId': movie.tmdbId,
+          'title': movie.title,
+          'posterPath': movie.posterPath,
+          'releaseYear': movie.releaseYear,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+  }
+
+  Future<void> removeFromWatchlist(int tmdbId) async {
+    final user = _auth.currentUser!;
+    await _localRepo.deleteMovie(tmdbId);
+
+    await _firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('watchlist')
+        .doc(tmdbId.toString())
+        .delete();
+  }
+
+  Future<void> markAsWatched({
+    required MovieLocal movie,
+    required double rating,
+    required String note,
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null) throw Exception('User not logged in');
+
+    final updated = movie.copyWith(
+      watched: true,
+      inWatchlist: false,
+      rating: rating,
+      note: note,
+    );
+
+    await _localRepo.saveMovie(updated);
+
+    await _firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('movies')
+        .doc(movie.tmdbId.toString())
+        .set({
+          'watched': true,
+          'inWatchlist': false,
+          'rating': rating,
+          'note': note,
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
   }
 }
