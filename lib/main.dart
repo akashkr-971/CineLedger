@@ -35,7 +35,7 @@ class CineLedgerApp extends ConsumerWidget {
       title: 'CineLedger',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: themeMode, // 🔥 THIS WAS MISSING
+      themeMode: themeMode,
 
       home: authState.when(
         loading:

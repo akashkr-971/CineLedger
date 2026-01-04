@@ -150,7 +150,10 @@ class MovieRepository {
     required String note,
   }) async {
     final user = _auth.currentUser;
-    if (user == null) throw Exception('User not logged in');
+
+    if (user == null) {
+      throw Exception('User not authenticated');
+    }
 
     final updated = movie.copyWith(
       watched: true,
@@ -167,10 +170,14 @@ class MovieRepository {
         .collection('movies')
         .doc(movie.tmdbId.toString())
         .set({
-          'watched': true,
-          'inWatchlist': false,
+          'tmdbId': movie.tmdbId,
+          'title': movie.title,
+          'posterPath': movie.posterPath,
+          'releaseYear': movie.releaseYear,
           'rating': rating,
           'note': note,
+          'watched': true,
+          'inWatchlist': false,
           'updatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
   }
