@@ -393,7 +393,6 @@ class _AddMovieSheetState extends ConsumerState<AddMovieSheet> {
                 ),
               ],
 
-              // ───────────────── Cancel ─────────────────
               if (selectedMovie == null) ...[
                 const SizedBox(height: 16),
                 Align(

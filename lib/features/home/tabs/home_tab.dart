@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'home_search_tab.dart';
 import '../../movies/movie_list_provioder.dart';
 import '../../movies/models/movie_local.dart';
 import '../../movies/popular_movies_provider.dart';
@@ -22,8 +21,6 @@ class HomeTab extends ConsumerWidget {
 
     final moviesAsync = ref.watch(movieListProvider);
     final popularAsync = ref.watch(popularMoviesProvider);
-
-    final localRepo = MovieLocalRepository();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -51,15 +48,11 @@ class HomeTab extends ConsumerWidget {
             '“Every movie you watch becomes a memory.”',
             style: theme.textTheme.bodyMedium?.copyWith(
               fontStyle: FontStyle.italic,
-              color: colors.onSurface.withOpacity(0.7),
+              color: colors.onSurface.withValues(alpha: 0.7),
             ),
           ),
 
           const SizedBox(height: 24),
-
-          const HomeSearchBar(),
-
-          const SizedBox(height: 32),
 
           // 🎬 Watched Recently
           _SectionHeader(title: 'Watched Recently', onViewAll: () {}),
@@ -90,23 +83,43 @@ class HomeTab extends ConsumerWidget {
           popularAsync.when(
             loading: () => _loadingRow(),
             error: (_, __) => _emptyRow('Failed to load popular movies'),
-            data: (movies) {
-              final topSix = movies.take(6).toList();
+            data: (popularMovies) {
+              // 👇 Get local movies (Hive → Firestore synced)
+              final localMovies = ref
+                  .watch(movieListProvider)
+                  .maybeWhen(
+                    data: (movies) => movies,
+                    orElse: () => <MovieLocal>[],
+                  );
+
+              final localMovieMap = {for (final m in localMovies) m.tmdbId: m};
+              final visiblePopular =
+                  popularMovies
+                      .where((movie) => !localMovieMap.containsKey(movie['id']))
+                      .take(6)
+                      .toList();
+
+              if (visiblePopular.isEmpty) {
+                return _emptyRow('No new popular movies 🎬');
+              }
 
               return SizedBox(
                 height: 240,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  itemCount: topSix.length,
+                  itemCount: visiblePopular.length,
                   separatorBuilder: (_, __) => const SizedBox(width: 12),
                   itemBuilder: (_, index) {
-                    final movie = topSix[index];
+                    final movie = visiblePopular[index];
 
                     return PopularMovieCard(
                       movie: movie,
                       onAdd: () async {
-                        final watchlistMovie = MovieLocal.fromTmdb(movie);
-                        await localRepo.saveMovie(watchlistMovie);
+                        final movieRepo = MovieRepository();
+
+                        await movieRepo.addToWatchlistFromTmdb(movie);
+
+                        // 🔄 Force UI refresh (Hive is already updated)
                         ref.invalidate(movieListProvider);
                       },
                     );

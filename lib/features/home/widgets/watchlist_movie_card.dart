@@ -210,6 +210,14 @@ class _RateMovieSheetState extends State<_RateMovieSheet> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colors.primary,
+                  foregroundColor: colors.onPrimary,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
                 onPressed: () async {
                   if (rating == 0) {
                     setState(() => showRatingError = true);

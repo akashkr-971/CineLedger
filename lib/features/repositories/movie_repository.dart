@@ -112,36 +112,56 @@ class MovieRepository {
     await localRepo.saveMovies(movies);
   }
 
-  Future<void> addToWatchlist(MovieLocal movie) async {
-    final user = _auth.currentUser!;
-    final updated = movie.copyWith(inWatchlist: true);
+  Future<void> addToWatchlistFromTmdb(Map<String, dynamic> movie) async {
+    final user = _auth.currentUser;
+    if (user == null) throw Exception('Not logged in');
 
-    await _localRepo.saveMovie(updated);
+    final localMovie = MovieLocal.fromTmdb(
+      movie,
+    ).copyWith(inWatchlist: true, watched: false);
+
+    await _localRepo.saveMovie(localMovie);
 
     await _firestore
         .collection('users')
         .doc(user.uid)
-        .collection('watchlist')
-        .doc(movie.tmdbId.toString())
+        .collection('movies')
+        .doc(localMovie.tmdbId.toString())
         .set({
-          'tmdbId': movie.tmdbId,
-          'title': movie.title,
-          'posterPath': movie.posterPath,
-          'releaseYear': movie.releaseYear,
+          'tmdbId': localMovie.tmdbId,
+          'userId': user.uid,
+          'title': localMovie.title,
+          'posterPath': localMovie.posterPath,
+          'releaseYear': localMovie.releaseYear,
+          'genres': movie['genre_ids'] ?? [],
+          'overview': movie['overview'] ?? '',
+          'voteAverage': movie['vote_average'],
+          'voteCount': movie['vote_count'],
+          'watched': false,
+          'inWatchlist': true,
           'createdAt': FieldValue.serverTimestamp(),
-        });
+        }, SetOptions(merge: true));
   }
 
-  Future<void> removeFromWatchlist(int tmdbId) async {
-    final user = _auth.currentUser!;
-    await _localRepo.deleteMovie(tmdbId);
+  Future<void> removeFromWatchlist(MovieLocal movie) async {
+    final user = _auth.currentUser;
+    if (user == null) throw Exception('Not authenticated');
 
+    final updated = movie.copyWith(inWatchlist: false);
+
+    // 🔥 Local first
+    await _localRepo.saveMovie(updated);
+
+    // ☁️ Firestore sync
     await _firestore
         .collection('users')
         .doc(user.uid)
-        .collection('watchlist')
-        .doc(tmdbId.toString())
-        .delete();
+        .collection('movies')
+        .doc(movie.tmdbId.toString())
+        .set({
+          'inWatchlist': false,
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
   }
 
   Future<void> markAsWatched({
@@ -150,9 +170,10 @@ class MovieRepository {
     required String note,
   }) async {
     final user = _auth.currentUser;
+    if (user == null) throw Exception('User not authenticated');
 
-    if (user == null) {
-      throw Exception('User not authenticated');
+    if (rating <= 0) {
+      throw Exception('Rating is required');
     }
 
     final updated = movie.copyWith(
@@ -171,13 +192,18 @@ class MovieRepository {
         .doc(movie.tmdbId.toString())
         .set({
           'tmdbId': movie.tmdbId,
+          'userId': user.uid,
+
           'title': movie.title,
           'posterPath': movie.posterPath,
           'releaseYear': movie.releaseYear,
+
           'rating': rating,
           'note': note,
+
           'watched': true,
           'inWatchlist': false,
+
           'updatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
   }
