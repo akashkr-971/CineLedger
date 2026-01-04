@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import 'movie_search_service.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import '../repositories/movie_repository.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'movie_list_provioder.dart';
 
-class AddMovieSheet extends StatefulWidget {
+class AddMovieSheet extends ConsumerStatefulWidget {
   const AddMovieSheet({super.key});
 
   @override
-  State<AddMovieSheet> createState() => _AddMovieSheetState();
+  ConsumerState<AddMovieSheet> createState() => _AddMovieSheetState();
 }
 
-class _AddMovieSheetState extends State<AddMovieSheet> {
+class _AddMovieSheetState extends ConsumerState<AddMovieSheet> {
   final titleController = TextEditingController();
   final noteController = TextEditingController();
 
@@ -358,8 +361,24 @@ class _AddMovieSheetState extends State<AddMovieSheet> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {
-                      // 🔜 Save to Firestore (next step)
+                    onPressed: () async {
+                      if (selectedMovie == null) return;
+                      final movieRepo = MovieRepository();
+                      final navigator = Navigator.of(context);
+                      try {
+                        await movieRepo.addMovie(
+                          movie: selectedMovie!,
+                          rating: rating,
+                          note: noteController.text.trim(),
+                        );
+                        ref.invalidate(movieListProvider);
+
+                        if (!mounted) return;
+                        navigator.pop();
+                      } catch (e) {
+                        if (!mounted) return;
+                        debugPrint('Failed to save movie: $e');
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: colors.primary,

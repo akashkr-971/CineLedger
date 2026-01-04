@@ -8,12 +8,17 @@ import 'features/auth/login_screen.dart';
 import 'features/home/home_screen.dart';
 import 'features/auth/verify_email.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'features/movies/models/movie_local.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
   await Firebase.initializeApp();
 
+  await Hive.initFlutter();
+  Hive.registerAdapter(MovieLocalAdapter());
+  await Hive.openBox<MovieLocal>('movies');
   runApp(const ProviderScope(child: CineLedgerApp()));
 }
 

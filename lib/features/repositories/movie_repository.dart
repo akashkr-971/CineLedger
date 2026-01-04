@@ -1,41 +1,112 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'movie_local_repository.dart';
+import '../movies/models/movie_local.dart';
 
 class MovieRepository {
-  final _firestore = FirebaseFirestore.instance;
-  final _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore;
+  final FirebaseAuth _auth;
+  final MovieLocalRepository _localRepo;
+
+  MovieRepository({
+    FirebaseFirestore? firestore,
+    FirebaseAuth? auth,
+    MovieLocalRepository? localRepo,
+  }) : _firestore = firestore ?? FirebaseFirestore.instance,
+       _auth = auth ?? FirebaseAuth.instance,
+       _localRepo = localRepo ?? MovieLocalRepository();
 
   Future<void> addMovie({
     required Map<String, dynamic> movie,
     required double rating,
-    required String note,
+    String? note,
   }) async {
     final user = _auth.currentUser;
-    if (user == null) throw Exception('User not logged in');
+    if (user == null) {
+      throw Exception('User not logged in');
+    }
+
+    final int tmdbId = movie['id'];
+    final String title = movie['title'];
 
     final releaseDate = movie['release_date'] ?? '';
-    final year =
-        releaseDate.isNotEmpty ? int.parse(releaseDate.split('-').first) : null;
+    final int? year =
+        releaseDate.isNotEmpty
+            ? int.tryParse(releaseDate.split('-').first)
+            : null;
 
+    /// 🔥 1. SAVE LOCALLY FIRST (offline-first)
+    final localMovie = MovieLocal(
+      tmdbId: tmdbId,
+      title: title,
+      posterPath: movie['poster_path'] ?? '',
+      releaseYear: year,
+      rating: rating,
+      note: note ?? '',
+      watched: true,
+    );
+
+    await _localRepo.saveMovie(localMovie);
+
+    /// ☁️ 2. SYNC TO FIRESTORE
     await _firestore
         .collection('users')
         .doc(user.uid)
         .collection('movies')
-        .doc(movie['id'].toString())
+        .doc(tmdbId.toString())
         .set({
-          'tmdbId': movie['id'],
-          'title': movie['title'],
+          'tmdbId': tmdbId,
+          'userId': user.uid,
+
+          'title': title,
           'originalTitle': movie['original_title'],
           'overview': movie['overview'],
+
           'posterPath': movie['poster_path'],
           'backdropPath': movie['backdrop_path'],
-          'genres': movie['genre_ids'],
+
+          'genres': movie['genre_ids'] ?? [],
           'releaseYear': year,
+
           'rating': rating,
-          'note': note,
+          'note': note ?? '',
+          'watched': true,
+
           'voteAverage': movie['vote_average'],
           'voteCount': movie['vote_count'],
+
           'createdAt': FieldValue.serverTimestamp(),
-        });
+        }, SetOptions(merge: true));
+  }
+
+  Future<void> syncFromFirestoreToLocal() async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    final snapshot =
+        await _firestore
+            .collection('users')
+            .doc(user.uid)
+            .collection('movies')
+            .get();
+
+    final localRepo = MovieLocalRepository();
+
+    final movies =
+        snapshot.docs.map((doc) {
+          final data = doc.data();
+
+          return MovieLocal(
+            tmdbId: data['tmdbId'],
+            title: data['title'],
+            posterPath: data['posterPath'] ?? '',
+            releaseYear: data['releaseYear'],
+            rating: (data['rating'] ?? 0).toDouble(),
+            note: data['note'] ?? '',
+            watched: data['watched'] ?? true,
+          );
+        }).toList();
+
+    await localRepo.saveMovies(movies);
   }
 }
