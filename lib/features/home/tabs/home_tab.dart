@@ -315,19 +315,81 @@ class _MovieCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 🎬 Poster + overlay actions
           Expanded(
-            child:
-                movie.posterPath.isNotEmpty
-                    ? Image.network(
-                      'https://image.tmdb.org/t/p/w342${movie.posterPath}',
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                    )
-                    : Container(
-                      color: colors.onSurface.withOpacity(0.1),
-                      child: const Center(child: Icon(Icons.movie_outlined)),
+            child: Stack(
+              children: [
+                // Poster image
+                Positioned.fill(
+                  child:
+                      movie.posterPath.isNotEmpty
+                          ? Image.network(
+                            'https://image.tmdb.org/t/p/w342${movie.posterPath}',
+                            fit: BoxFit.cover,
+                          )
+                          : Container(
+                            color: colors.onSurface.withOpacity(0.1),
+                            child: const Center(
+                              child: Icon(Icons.movie_outlined),
+                            ),
+                          ),
+                ),
+
+                // 🗑️ Delete button overlay
+                Positioned(
+                  top: 6,
+                  right: 6,
+                  child: Material(
+                    color: Colors.black.withOpacity(0.55),
+                    shape: const CircleBorder(),
+                    child: InkWell(
+                      customBorder: const CircleBorder(),
+                      onTap: () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder:
+                              (_) => AlertDialog(
+                                title: const Text('Remove movie?'),
+                                content: const Text(
+                                  'This will permanently remove it from your history.',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed:
+                                        () => Navigator.pop(context, false),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed:
+                                        () => Navigator.pop(context, true),
+                                    child: const Text('Remove'),
+                                  ),
+                                ],
+                              ),
+                        );
+
+                        if (confirm == true) {
+                          final movieRepo = MovieRepository();
+                          await movieRepo.deleteWatchedMovie(movie.tmdbId);
+                          ref.invalidate(movieListProvider);
+                        }
+                      },
+                      child: const Padding(
+                        padding: EdgeInsets.all(6),
+                        child: Icon(
+                          Icons.delete_outline,
+                          size: 18,
+                          color: Colors.redAccent,
+                        ),
+                      ),
                     ),
+                  ),
+                ),
+              ],
+            ),
           ),
+
+          // 📄 Details
           Padding(
             padding: const EdgeInsets.all(8),
             child: Column(
@@ -359,44 +421,6 @@ class _MovieCard extends ConsumerWidget {
                         ),
                         const SizedBox(width: 2),
                         Text(movie.rating.toStringAsFixed(1)),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.delete_outline),
-                          color: Colors.redAccent,
-                          onPressed: () async {
-                            final confirm = await showDialog<bool>(
-                              context: context,
-                              builder:
-                                  (_) => AlertDialog(
-                                    title: const Text('Remove movie?'),
-                                    content: const Text(
-                                      'This will permanently remove it from your history.',
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed:
-                                            () => Navigator.pop(context, false),
-                                        child: const Text('Cancel'),
-                                      ),
-                                      TextButton(
-                                        onPressed:
-                                            () => Navigator.pop(context, true),
-                                        child: const Text('Remove'),
-                                      ),
-                                    ],
-                                  ),
-                            );
-
-                            if (confirm == true) {
-                              final movieRepo = MovieRepository();
-                              await movieRepo.deleteWatchedMovie(movie.tmdbId);
-                              ref.invalidate(movieListProvider);
-                            }
-                          },
-                        ),
                       ],
                     ),
                   ],

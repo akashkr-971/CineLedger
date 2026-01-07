@@ -60,7 +60,7 @@ class ShowAllMoviesPage extends ConsumerWidget {
                   a.watchedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
               final bTime =
                   b.watchedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-              return bTime.compareTo(aTime); // DESC
+              return bTime.compareTo(aTime);
             });
 
         if (watched.isEmpty) {
