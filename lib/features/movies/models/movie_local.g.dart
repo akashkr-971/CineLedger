@@ -23,6 +23,7 @@ class MovieLocalAdapter extends TypeAdapter<MovieLocal> {
       releaseYear: fields[3] as int?,
       rating: fields[4] as double,
       note: fields[5] as String,
+      watchedAt: fields[8] as DateTime?,
       watched: fields[6] as bool?,
       inWatchlist: fields[7] as bool?,
     );
@@ -31,7 +32,7 @@ class MovieLocalAdapter extends TypeAdapter<MovieLocal> {
   @override
   void write(BinaryWriter writer, MovieLocal obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(9)
       ..writeByte(0)
       ..write(obj.tmdbId)
       ..writeByte(1)
@@ -47,7 +48,9 @@ class MovieLocalAdapter extends TypeAdapter<MovieLocal> {
       ..writeByte(6)
       ..write(obj.watched)
       ..writeByte(7)
-      ..write(obj.inWatchlist);
+      ..write(obj.inWatchlist)
+      ..writeByte(8)
+      ..write(obj.watchedAt);
   }
 
   @override

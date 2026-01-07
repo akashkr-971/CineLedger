@@ -19,6 +19,7 @@ class MovieRepository {
   Future<void> addMovie({
     required Map<String, dynamic> movie,
     required double rating,
+
     String? note,
   }) async {
     final user = _auth.currentUser;
@@ -45,6 +46,7 @@ class MovieRepository {
       note: note ?? '',
       watched: true,
       inWatchlist: false,
+      watchedAt: DateTime.now(),
     );
 
     await _localRepo.saveMovie(localMovie);
@@ -168,6 +170,7 @@ class MovieRepository {
     required MovieLocal movie,
     required double rating,
     required String note,
+    DateTime? watchedAt,
   }) async {
     final user = _auth.currentUser;
     if (user == null) throw Exception('User not authenticated');
@@ -181,6 +184,7 @@ class MovieRepository {
       inWatchlist: false,
       rating: rating,
       note: note,
+      watchedAt: DateTime.now(),
     );
 
     await _localRepo.saveMovie(updated);
@@ -203,6 +207,8 @@ class MovieRepository {
 
           'watched': true,
           'inWatchlist': false,
+
+          'watchedAt': FieldValue.serverTimestamp(),
 
           'updatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));

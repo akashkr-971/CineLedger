@@ -28,6 +28,9 @@ class MovieLocal {
   @HiveField(7)
   final bool inWatchlist;
 
+  @HiveField(8)
+  final DateTime? watchedAt;
+
   MovieLocal({
     required this.tmdbId,
     required this.title,
@@ -35,6 +38,7 @@ class MovieLocal {
     this.releaseYear,
     required this.rating,
     required this.note,
+    this.watchedAt,
     bool? watched,
     bool? inWatchlist,
   }) : watched = watched ?? false,
@@ -57,15 +61,17 @@ class MovieLocal {
       note: '',
       watched: false,
       inWatchlist: true,
+      watchedAt: null,
     );
   }
 
-  /// 🧠 copyWith (NOW this works)
+  /// 🧠 copyWith (FULLY FIXED)
   MovieLocal copyWith({
     bool? watched,
     bool? inWatchlist,
     double? rating,
     String? note,
+    DateTime? watchedAt,
   }) {
     return MovieLocal(
       tmdbId: tmdbId,
@@ -76,6 +82,7 @@ class MovieLocal {
       note: note ?? this.note,
       watched: watched ?? this.watched,
       inWatchlist: inWatchlist ?? this.inWatchlist,
+      watchedAt: watchedAt ?? this.watchedAt,
     );
   }
 }

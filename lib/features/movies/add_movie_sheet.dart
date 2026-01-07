@@ -3,7 +3,7 @@ import 'movie_search_service.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import '../repositories/movie_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'movie_list_provioder.dart';
+import 'movie_list_provider.dart';
 
 class AddMovieSheet extends ConsumerStatefulWidget {
   const AddMovieSheet({super.key});

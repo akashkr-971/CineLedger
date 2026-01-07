@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../movies/movie_list_provioder.dart';
+import '../../movies/movie_list_provider.dart';
 import '../../movies/models/movie_local.dart';
 import '../../movies/popular_movies_provider.dart';
 import '../../repositories/movie_local_repository.dart';
 import '../../repositories/movie_repository.dart';
 import '../widgets/popular_movie_card.dart';
 import '../widgets/watchlist_movie_card.dart';
+import '../../movies/show_all_movies_page.dart';
+import '../../movies/models/show_all_types.dart';
 
 class HomeTab extends ConsumerWidget {
   final AsyncValue<Map<String, dynamic>> profileAsync;
@@ -55,7 +57,18 @@ class HomeTab extends ConsumerWidget {
           const SizedBox(height: 24),
 
           // 🎬 Watched Recently
-          _SectionHeader(title: 'Watched Recently', onViewAll: () {}),
+          _SectionHeader(
+            title: 'Watched Recently',
+            onViewAll: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder:
+                      (_) => const ShowAllMoviesPage(type: ShowAllType.watched),
+                ),
+              );
+            },
+          ),
 
           const SizedBox(height: 12),
 
@@ -63,20 +76,40 @@ class HomeTab extends ConsumerWidget {
             loading: () => _loadingRow(),
             error: (_, __) => _emptyRow('Failed to load movies'),
             data: (movies) {
-              final watched = movies.where((m) => m.watched).take(6).toList();
+              final watched =
+                  movies.where((m) => m.watched).toList()..sort((a, b) {
+                    final aTime =
+                        a.watchedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+                    final bTime =
+                        b.watchedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+                    return bTime.compareTo(aTime); // DESC
+                  });
+
+              final recentSix = watched.take(6).toList();
 
               if (watched.isEmpty) {
                 return _emptyRow('No watched movies yet 🎬');
               }
 
-              return _MovieHorizontalList(movies: watched);
+              return _MovieHorizontalList(movies: recentSix);
             },
           ),
 
           const SizedBox(height: 32),
 
           // 🔥 Popular Movies
-          _SectionHeader(title: 'Popular Movies', onViewAll: () {}),
+          _SectionHeader(
+            title: 'Popular Movies',
+            onViewAll: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder:
+                      (_) => const ShowAllMoviesPage(type: ShowAllType.popular),
+                ),
+              );
+            },
+          ),
 
           const SizedBox(height: 12),
 
@@ -132,7 +165,19 @@ class HomeTab extends ConsumerWidget {
           const SizedBox(height: 32),
 
           // 📌 Watchlist
-          _SectionHeader(title: 'Watchlist', onViewAll: () {}),
+          _SectionHeader(
+            title: 'Watchlist',
+            onViewAll: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder:
+                      (_) =>
+                          const ShowAllMoviesPage(type: ShowAllType.watchlist),
+                ),
+              );
+            },
+          ),
 
           const SizedBox(height: 12),
 
