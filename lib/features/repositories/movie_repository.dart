@@ -213,4 +213,20 @@ class MovieRepository {
           'updatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
   }
+
+  Future<void> deleteWatchedMovie(int tmdbId) async {
+    final user = _auth.currentUser;
+    if (user == null) throw Exception('Not authenticated');
+
+    // 🔥 Local delete
+    await _localRepo.deleteWatchedMovie(tmdbId);
+
+    // ☁️ Firestore delete
+    await _firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('movies')
+        .doc(tmdbId.toString())
+        .delete();
+  }
 }

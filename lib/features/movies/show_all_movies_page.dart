@@ -54,7 +54,14 @@ class ShowAllMoviesPage extends ConsumerWidget {
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (_, __) => const Center(child: Text('Failed to load')),
       data: (movies) {
-        final watched = movies.where((m) => m.watched).toList();
+        final watched =
+            movies.where((m) => m.watched).toList()..sort((a, b) {
+              final aTime =
+                  a.watchedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+              final bTime =
+                  b.watchedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+              return bTime.compareTo(aTime); // DESC
+            });
 
         if (watched.isEmpty) {
           return const Center(child: Text('No watched movies'));

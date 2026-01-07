@@ -295,13 +295,13 @@ class _MovieHorizontalList extends StatelessWidget {
   }
 }
 
-class _MovieCard extends StatelessWidget {
+class _MovieCard extends ConsumerWidget {
   final MovieLocal movie;
 
   const _MovieCard({required this.movie});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
@@ -359,6 +359,44 @@ class _MovieCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 2),
                         Text(movie.rating.toStringAsFixed(1)),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline),
+                          color: Colors.redAccent,
+                          onPressed: () async {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder:
+                                  (_) => AlertDialog(
+                                    title: const Text('Remove movie?'),
+                                    content: const Text(
+                                      'This will permanently remove it from your history.',
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed:
+                                            () => Navigator.pop(context, false),
+                                        child: const Text('Cancel'),
+                                      ),
+                                      TextButton(
+                                        onPressed:
+                                            () => Navigator.pop(context, true),
+                                        child: const Text('Remove'),
+                                      ),
+                                    ],
+                                  ),
+                            );
+
+                            if (confirm == true) {
+                              final movieRepo = MovieRepository();
+                              await movieRepo.deleteWatchedMovie(movie.tmdbId);
+                              ref.invalidate(movieListProvider);
+                            }
+                          },
+                        ),
                       ],
                     ),
                   ],

@@ -64,4 +64,9 @@ class MovieLocalRepository {
     final box = await _openBox();
     await box.delete(tmdbId);
   }
+
+  Future<void> deleteWatchedMovie(int tmdbId) async {
+    final box = await _openBox();
+    await box.delete(tmdbId);
+  }
 }
