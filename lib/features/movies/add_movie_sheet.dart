@@ -69,7 +69,6 @@ class _AddMovieSheetState extends ConsumerState<AddMovieSheet> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ───────────────── Drag Handle ─────────────────
               Center(
                 child: Container(
                   width: 40,

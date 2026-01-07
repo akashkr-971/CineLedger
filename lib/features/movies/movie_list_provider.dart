@@ -10,10 +10,9 @@ final movieListProvider = FutureProvider<List<MovieLocal>>((ref) async {
   final localMovies = await localRepo.getAllMovies();
 
   if (localMovies.isNotEmpty) {
-    return localMovies; // 🚀 instant UI
+    return localMovies;
   }
 
-  // 🔄 Fallback → Firestore
   await remoteRepo.syncFromFirestoreToLocal();
 
   return await localRepo.getAllMovies();
