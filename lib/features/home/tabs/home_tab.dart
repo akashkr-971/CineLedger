@@ -9,7 +9,7 @@ import '../../repositories/movie_repository.dart';
 import '../widgets/popular_movie_card.dart';
 import '../widgets/watchlist_movie_card.dart';
 import '../../movies/show_all_movies_page.dart';
-import '../../movies/models/show_all_types.dart';
+import '../../movies/show_all_popular_movies_page.dart';
 
 class HomeTab extends ConsumerWidget {
   final AsyncValue<Map<String, dynamic>> profileAsync;
@@ -57,67 +57,97 @@ class HomeTab extends ConsumerWidget {
           const SizedBox(height: 24),
 
           // 🎬 Watched Recently
-          _SectionHeader(
-            title: 'Watched Recently',
-            onViewAll: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder:
-                      (_) => const ShowAllMoviesPage(type: ShowAllType.watched),
-                ),
-              );
-            },
-          ),
-
-          const SizedBox(height: 12),
-
           moviesAsync.when(
-            loading: () => _loadingRow(),
-            error: (_, __) => _emptyRow('Failed to load movies'),
+            loading:
+                () => Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _SectionHeader(title: 'Watched Recently', onViewAll: () {}),
+                    const SizedBox(height: 12),
+                    _loadingRow(),
+                  ],
+                ),
+
+            error:
+                (_, __) => Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _SectionHeader(title: 'Watched Recently', onViewAll: () {}),
+                    const SizedBox(height: 12),
+                    _emptyRow('Failed to load movies'),
+                  ],
+                ),
+
             data: (movies) {
-              final watched =
+              final watchedMovies =
                   movies.where((m) => m.watched).toList()..sort((a, b) {
                     final aTime =
                         a.watchedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
                     final bTime =
                         b.watchedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-                    return bTime.compareTo(aTime); // DESC
+                    return bTime.compareTo(aTime); // newest first
                   });
 
-              final recentSix = watched.take(6).toList();
+              final recentSix = watchedMovies.take(6).toList();
 
-              if (watched.isEmpty) {
-                return _emptyRow('No watched movies yet 🎬');
-              }
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _SectionHeader(
+                    title: 'Watched Recently',
+                    onViewAll:
+                        watchedMovies.isEmpty
+                            ? () {}
+                            : () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (_) => ShowAllMoviesPage(
+                                        title: 'Watched Movies',
+                                        movies: watchedMovies,
+                                      ),
+                                ),
+                              );
+                            },
+                  ),
 
-              return _MovieHorizontalList(movies: recentSix);
+                  const SizedBox(height: 12),
+
+                  watchedMovies.isEmpty
+                      ? _emptyRow('No watched movies yet 🎬')
+                      : _MovieHorizontalList(movies: recentSix),
+                ],
+              );
             },
           ),
 
           const SizedBox(height: 32),
 
           // 🔥 Popular Movies
-          _SectionHeader(
-            title: 'Popular Movies',
-            onViewAll: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder:
-                      (_) => const ShowAllMoviesPage(type: ShowAllType.popular),
-                ),
-              );
-            },
-          ),
-
-          const SizedBox(height: 12),
-
           popularAsync.when(
-            loading: () => _loadingRow(),
-            error: (_, __) => _emptyRow('Failed to load popular movies'),
+            loading:
+                () => Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _SectionHeader(title: 'Popular Movies', onViewAll: () {}),
+                    const SizedBox(height: 12),
+                    _loadingRow(),
+                  ],
+                ),
+
+            error:
+                (_, __) => Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _SectionHeader(title: 'Popular Movies', onViewAll: () {}),
+                    const SizedBox(height: 12),
+                    _emptyRow('Failed to load popular movies'),
+                  ],
+                ),
+
             data: (popularMovies) {
-              // 👇 Get local movies (Hive → Firestore synced)
+              // 🔹 Local movies (Hive)
               final localMovies = ref
                   .watch(movieListProvider)
                   .maybeWhen(
@@ -125,39 +155,64 @@ class HomeTab extends ConsumerWidget {
                     orElse: () => <MovieLocal>[],
                   );
 
-              final localMovieMap = {for (final m in localMovies) m.tmdbId: m};
+              final localMovieIds = {for (final m in localMovies) m.tmdbId};
+
+              // 🔥 Filter out watched / watchlisted
               final visiblePopular =
                   popularMovies
-                      .where((movie) => !localMovieMap.containsKey(movie['id']))
-                      .take(6)
+                      .where((movie) => !localMovieIds.contains(movie['id']))
                       .toList();
 
-              if (visiblePopular.isEmpty) {
-                return _emptyRow('No new popular movies 🎬');
-              }
+              final previewSix = visiblePopular.take(6).toList();
 
-              return SizedBox(
-                height: 240,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: visiblePopular.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 12),
-                  itemBuilder: (_, index) {
-                    final movie = visiblePopular[index];
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _SectionHeader(
+                    title: 'Popular Movies',
+                    onViewAll:
+                        visiblePopular.isEmpty
+                            ? () {}
+                            : () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (_) => ShowAllPopularMoviesPage(
+                                        movies:
+                                            visiblePopular, // ✅ raw TMDB data
+                                      ),
+                                ),
+                              );
+                            },
+                  ),
 
-                    return PopularMovieCard(
-                      movie: movie,
-                      onAdd: () async {
-                        final movieRepo = MovieRepository();
+                  const SizedBox(height: 12),
 
-                        await movieRepo.addToWatchlistFromTmdb(movie);
+                  visiblePopular.isEmpty
+                      ? _emptyRow('No new popular movies 🎬')
+                      : SizedBox(
+                        height: 240,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: previewSix.length,
+                          separatorBuilder:
+                              (_, __) => const SizedBox(width: 12),
+                          itemBuilder: (_, index) {
+                            final movie = previewSix[index];
 
-                        // 🔄 Force UI refresh (Hive is already updated)
-                        ref.invalidate(movieListProvider);
-                      },
-                    );
-                  },
-                ),
+                            return PopularMovieCard(
+                              movie: movie,
+                              onAdd: () async {
+                                final movieRepo = MovieRepository();
+                                await movieRepo.addToWatchlistFromTmdb(movie);
+                                ref.invalidate(movieListProvider);
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                ],
               );
             },
           ),
@@ -165,64 +220,90 @@ class HomeTab extends ConsumerWidget {
           const SizedBox(height: 32),
 
           // 📌 Watchlist
-          _SectionHeader(
-            title: 'Watchlist',
-            onViewAll: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder:
-                      (_) =>
-                          const ShowAllMoviesPage(type: ShowAllType.watchlist),
-                ),
-              );
-            },
-          ),
-
-          const SizedBox(height: 12),
-
           moviesAsync.when(
-            loading: () => _loadingRow(),
-            error: (_, __) => _emptyRow('Failed to load watchlist'),
-            data: (movies) {
-              final watchlist =
-                  movies
-                      .where((m) => m.inWatchlist && !m.watched)
-                      .take(6)
-                      .toList();
-
-              if (watchlist.isEmpty) {
-                return _emptyRow('Your watchlist is empty 🍿');
-              }
-
-              return SizedBox(
-                height: 240,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: watchlist.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 12),
-                  itemBuilder: (_, index) {
-                    final movie = watchlist[index];
-
-                    return WatchlistMovieCard(
-                      movie: movie,
-                      onSaveWatched: (rating, note) async {
-                        final movieRepo = MovieRepository();
-                        await movieRepo.markAsWatched(
-                          movie: movie,
-                          rating: rating,
-                          note: note,
-                        );
-                        ref.invalidate(movieListProvider);
-                      },
-                      onRemove: () async {
-                        final localRepo = MovieLocalRepository();
-                        await localRepo.deleteMovie(movie.tmdbId);
-                        ref.invalidate(movieListProvider);
-                      },
-                    );
-                  },
+            loading:
+                () => Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _SectionHeader(title: 'Watchlist', onViewAll: () {}),
+                    const SizedBox(height: 12),
+                    _loadingRow(),
+                  ],
                 ),
+
+            error:
+                (_, __) => Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _SectionHeader(title: 'Watchlist', onViewAll: () {}),
+                    const SizedBox(height: 12),
+                    _emptyRow('Failed to load watchlist'),
+                  ],
+                ),
+
+            data: (movies) {
+              final watchlistMovies =
+                  movies.where((m) => m.inWatchlist && !m.watched).toList();
+
+              final previewSix = watchlistMovies.take(6).toList();
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _SectionHeader(
+                    title: 'Watchlist',
+                    onViewAll:
+                        watchlistMovies.isEmpty
+                            ? () {}
+                            : () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (_) => ShowAllMoviesPage(
+                                        title: 'Watchlist Movies',
+                                        movies: watchlistMovies,
+                                      ),
+                                ),
+                              );
+                            },
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  watchlistMovies.isEmpty
+                      ? _emptyRow('Your watchlist is empty 🍿')
+                      : SizedBox(
+                        height: 240,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: previewSix.length,
+                          separatorBuilder:
+                              (_, __) => const SizedBox(width: 12),
+                          itemBuilder: (_, index) {
+                            final movie = previewSix[index];
+
+                            return WatchlistMovieCard(
+                              movie: movie,
+                              onSaveWatched: (rating, note) async {
+                                final movieRepo = MovieRepository();
+                                await movieRepo.markAsWatched(
+                                  movie: movie,
+                                  rating: rating,
+                                  note: note,
+                                );
+                                ref.invalidate(movieListProvider);
+                              },
+                              onRemove: () async {
+                                final localRepo = MovieLocalRepository();
+                                await localRepo.deleteMovie(movie.tmdbId);
+                                ref.invalidate(movieListProvider);
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                ],
               );
             },
           ),

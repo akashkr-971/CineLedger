@@ -1,156 +1,156 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'models/show_all_types.dart';
-import 'movie_list_provider.dart';
-import 'popular_movies_provider.dart';
-import '../home/widgets/popular_movie_card.dart';
-import '../home/widgets/watchlist_movie_card.dart';
+import '../movies/models/movie_local.dart';
+import '../movies/movie_list_provider.dart';
 import '../repositories/movie_repository.dart';
 import '../home/widgets/movie_gird_card.dart';
 
-class ShowAllMoviesPage extends ConsumerWidget {
-  final ShowAllType type;
+class ShowAllMoviesPage extends ConsumerStatefulWidget {
+  final String title;
+  final List<MovieLocal> movies;
 
-  const ShowAllMoviesPage({super.key, required this.type});
+  const ShowAllMoviesPage({
+    super.key,
+    required this.title,
+    required this.movies,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ShowAllMoviesPage> createState() => _ShowAllMoviesPageState();
+}
+
+class _ShowAllMoviesPageState extends ConsumerState<ShowAllMoviesPage> {
+  late List<MovieLocal> _filteredMovies;
+  final _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _filteredMovies = widget.movies;
+  }
+
+  void _onSearch(String query) {
+    final q = query.trim().toLowerCase();
+
+    setState(() {
+      if (q.isEmpty) {
+        _filteredMovies = widget.movies;
+      } else {
+        _filteredMovies =
+            widget.movies.where((movie) {
+              return movie.title.toLowerCase().contains(q);
+            }).toList();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: Text(_title)),
-      body: _buildBody(context, ref, theme),
-    );
-  }
-
-  String get _title {
-    switch (type) {
-      case ShowAllType.watched:
-        return 'Watched Movies';
-      case ShowAllType.watchlist:
-        return 'Watchlist';
-      case ShowAllType.popular:
-        return 'Popular Movies';
-    }
-  }
-
-  Widget _buildBody(BuildContext context, WidgetRef ref, ThemeData theme) {
-    switch (type) {
-      case ShowAllType.watched:
-        return _watchedGrid(ref, theme);
-
-      case ShowAllType.watchlist:
-        return _watchlistGrid(ref, theme);
-
-      case ShowAllType.popular:
-        return _popularGrid(ref);
-    }
-  }
-
-  Widget _watchedGrid(WidgetRef ref, ThemeData theme) {
-    final moviesAsync = ref.watch(movieListProvider);
-
-    return moviesAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (_, __) => const Center(child: Text('Failed to load')),
-      data: (movies) {
-        final watched =
-            movies.where((m) => m.watched).toList()..sort((a, b) {
-              final aTime =
-                  a.watchedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-              final bTime =
-                  b.watchedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-              return bTime.compareTo(aTime);
-            });
-
-        if (watched.isEmpty) {
-          return const Center(child: Text('No watched movies'));
-        }
-
-        return _movieGrid(
-          movies: watched,
-          itemBuilder: (movie) => MovieGridCard(movie: movie),
-        );
-      },
-    );
-  }
-
-  // 📌 Watchlist
-  Widget _watchlistGrid(WidgetRef ref, ThemeData theme) {
-    final moviesAsync = ref.watch(movieListProvider);
-
-    return moviesAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (_, __) => const Center(child: Text('Failed to load')),
-      data: (movies) {
-        final watchlist = movies.where((m) => m.inWatchlist).toList();
-
-        if (watchlist.isEmpty) {
-          return const Center(child: Text('Watchlist is empty'));
-        }
-
-        return _movieGrid(
-          movies: watchlist,
-          itemBuilder:
-              (movie) => WatchlistMovieCard(
-                movie: movie,
-                onSaveWatched: (rating, note) async {
-                  final repo = MovieRepository();
-                  await repo.markAsWatched(
-                    movie: movie,
-                    rating: rating,
-                    note: note,
-                  );
-                  ref.invalidate(movieListProvider);
-                },
-                onRemove: () async {
-                  final repo = MovieRepository();
-                  await repo.removeFromWatchlist(movie);
-                  ref.invalidate(movieListProvider);
-                },
+      appBar: AppBar(title: Text(widget.title)),
+      body: Column(
+        children: [
+          // 🔍 Search bar
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: TextField(
+              controller: _searchController,
+              onChanged: _onSearch,
+              decoration: InputDecoration(
+                hintText: 'Search movies...',
+                prefixIcon: const Icon(Icons.search),
+                filled: true,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
+                ),
               ),
-        );
-      },
-    );
-  }
+            ),
+          ),
 
-  Widget _popularGrid(WidgetRef ref) {
-    final popularAsync = ref.watch(popularMoviesProvider);
+          // 🎬 Grid
+          Expanded(
+            child:
+                _filteredMovies.isEmpty
+                    ? Center(
+                      child: Text(
+                        'No movies found',
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                    )
+                    : GridView.builder(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 3,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                            childAspectRatio: 0.65,
+                          ),
+                      itemCount: _filteredMovies.length,
+                      itemBuilder: (context, index) {
+                        final movie = _filteredMovies[index];
 
-    return popularAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (_, __) => const Center(child: Text('Failed to load')),
-      data: (movies) {
-        return _movieGrid(
-          movies: movies,
-          itemBuilder:
-              (movie) => PopularMovieCard(
-                movie: movie,
-                onAdd: () async {
-                  final repo = MovieRepository();
-                  await repo.addToWatchlistFromTmdb(movie);
-                  ref.invalidate(movieListProvider);
-                },
-              ),
-        );
-      },
-    );
-  }
+                        return MovieGridCard(
+                          movie: movie,
+                          onDelete:
+                              movie.watched
+                                  ? () async {
+                                    final confirm = await showDialog<bool>(
+                                      context: context,
+                                      builder:
+                                          (_) => AlertDialog(
+                                            title: const Text('Remove movie?'),
+                                            content: const Text(
+                                              'This will permanently remove it.',
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed:
+                                                    () => Navigator.pop(
+                                                      context,
+                                                      false,
+                                                    ),
+                                                child: const Text('Cancel'),
+                                              ),
+                                              TextButton(
+                                                onPressed:
+                                                    () => Navigator.pop(
+                                                      context,
+                                                      true,
+                                                    ),
+                                                child: const Text('Remove'),
+                                              ),
+                                            ],
+                                          ),
+                                    );
 
-  Widget _movieGrid<T>({
-    required List<T> movies,
-    required Widget Function(T) itemBuilder,
-  }) {
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        childAspectRatio: 0.6,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
+                                    if (confirm == true) {
+                                      final repo = MovieRepository();
+                                      await repo.deleteWatchedMovie(
+                                        movie.tmdbId,
+                                      );
+                                      ref.invalidate(movieListProvider);
+                                    }
+                                  }
+                                  : null,
+                        );
+                      },
+                    ),
+          ),
+        ],
       ),
-      itemCount: movies.length,
-      itemBuilder: (_, index) => itemBuilder(movies[index]),
     );
   }
 }
