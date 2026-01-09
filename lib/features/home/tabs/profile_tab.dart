@@ -9,6 +9,8 @@ import '../../movies/popular_movies_provider.dart';
 import '../../movies/movie_list_provider.dart';
 import '../../auth/auth_providers.dart';
 import '../home_screen.dart';
+import '../../movies/show_all_movies_page.dart';
+import '../../movies/models/movie_local.dart';
 
 class ProfileTab extends ConsumerWidget {
   const ProfileTab({super.key});
@@ -19,6 +21,13 @@ class ProfileTab extends ConsumerWidget {
     final colors = theme.colorScheme;
     final user = FirebaseAuth.instance.currentUser;
     final profileAsync = ref.watch(userProfileProvider);
+    final moviesAsync = ref.watch(movieListProvider);
+    final watchlistMovies = moviesAsync.when(
+      loading: () => <MovieLocal>[],
+      error: (_, __) => <MovieLocal>[],
+      data:
+          (movies) => movies.where((m) => m.inWatchlist && !m.watched).toList(),
+    );
 
     Future<void> showEditNameDialog(
       BuildContext context,
@@ -27,7 +36,6 @@ class ProfileTab extends ConsumerWidget {
     ) async {
       final controller = TextEditingController(text: currentName);
       final repo = UserRepository();
-
       await showDialog(
         context: context,
         builder: (context) {
@@ -149,14 +157,39 @@ class ProfileTab extends ConsumerWidget {
               ),
             ],
           ),
-
-          const SizedBox(height: 32),
-
+          const SizedBox(height: 14),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: const [
-              _ProfileStat(label: 'Movies', value: '0'),
-              _ProfileStat(label: 'Series', value: '0'),
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const SizedBox(height: 24),
+
+              moviesAsync.when(
+                loading: () => _ProfileStat(label: 'Movies', value: '0'),
+                error: (_, __) => _ProfileStat(label: 'Movies', value: '0'),
+                data: (movies) {
+                  final watchedMovies = movies.where((m) => m.watched).length;
+
+                  return _ProfileStat(
+                    label: 'Movies',
+                    value: watchedMovies.toString(),
+                  );
+                },
+              ),
+              const SizedBox(width: 40),
+              moviesAsync.when(
+                loading: () => _ProfileStat(label: 'Watchlists', value: '0'),
+                error: (_, __) => _ProfileStat(label: 'Watchlists', value: '0'),
+                data: (movies) {
+                  final watchlistCount =
+                      movies.where((m) => m.inWatchlist).length;
+
+                  return _ProfileStat(
+                    label: 'Watchlists',
+                    value: watchlistCount.toString(),
+                  );
+                },
+              ),
             ],
           ),
 
@@ -178,7 +211,16 @@ class ProfileTab extends ConsumerWidget {
             icon: Icons.bookmark_border,
             title: 'Watchlist',
             onTap: () {
-              ref.read(themeModeProvider.notifier).toggleTheme();
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder:
+                      (_) => ShowAllMoviesPage(
+                        title: 'Watchlist',
+                        movies: watchlistMovies,
+                      ),
+                ),
+              );
             },
           ),
 
