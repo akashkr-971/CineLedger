@@ -75,7 +75,7 @@ class _AddMovieSheetState extends ConsumerState<AddMovieSheet> {
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
-                    color: colors.onSurface.withOpacity(0.3),
+                    color: colors.onSurface.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),

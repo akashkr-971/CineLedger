@@ -4,6 +4,7 @@ import '../movies/models/movie_local.dart';
 import '../movies/movie_list_provider.dart';
 import '../repositories/movie_repository.dart';
 import '../home/widgets/movie_gird_card.dart';
+import 'movie_details_page.dart';
 
 class ShowAllMoviesPage extends ConsumerStatefulWidget {
   final String title;
@@ -104,6 +105,16 @@ class _ShowAllMoviesPageState extends ConsumerState<ShowAllMoviesPage> {
 
                         return MovieGridCard(
                           movie: movie,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder:
+                                    (_) =>
+                                        MovieDetailsPage(tmdbId: movie.tmdbId),
+                              ),
+                            );
+                          },
                           onDelete:
                               movie.watched
                                   ? () async {

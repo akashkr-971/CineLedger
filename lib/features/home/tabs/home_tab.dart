@@ -10,6 +10,7 @@ import '../widgets/popular_movie_card.dart';
 import '../widgets/watchlist_movie_card.dart';
 import '../../movies/show_all_movies_page.dart';
 import '../../movies/show_all_popular_movies_page.dart';
+import '../../movies/movie_details_page.dart';
 
 class HomeTab extends ConsumerWidget {
   final AsyncValue<Map<String, dynamic>> profileAsync;
@@ -116,7 +117,18 @@ class HomeTab extends ConsumerWidget {
 
                   watchedMovies.isEmpty
                       ? _emptyRow('No watched movies yet 🎬')
-                      : _MovieHorizontalList(movies: recentSix),
+                      : _MovieHorizontalList(
+                        movies: recentSix,
+                        onTap: (movie) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (_) => MovieDetailsPage(tmdbId: movie.tmdbId),
+                            ),
+                          );
+                        },
+                      ),
                 ],
               );
             },
@@ -147,7 +159,6 @@ class HomeTab extends ConsumerWidget {
                 ),
 
             data: (popularMovies) {
-              // 🔹 Local movies (Hive)
               final localMovies = ref
                   .watch(movieListProvider)
                   .maybeWhen(
@@ -156,8 +167,6 @@ class HomeTab extends ConsumerWidget {
                   );
 
               final localMovieIds = {for (final m in localMovies) m.tmdbId};
-
-              // 🔥 Filter out watched / watchlisted
               final visiblePopular =
                   popularMovies
                       .where((movie) => !localMovieIds.contains(movie['id']))
@@ -357,9 +366,9 @@ class _SectionHeader extends StatelessWidget {
 
 class _MovieHorizontalList extends StatelessWidget {
   final List<MovieLocal> movies;
+  final void Function(MovieLocal movie)? onTap;
 
-  const _MovieHorizontalList({required this.movies});
-
+  const _MovieHorizontalList({required this.movies, this.onTap});
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -369,7 +378,12 @@ class _MovieHorizontalList extends StatelessWidget {
         itemCount: movies.length,
         separatorBuilder: (_, __) => const SizedBox(width: 12),
         itemBuilder: (_, index) {
-          return _MovieCard(movie: movies[index]);
+          final movie = movies[index];
+
+          return _MovieCard(
+            movie: movie,
+            onTap: onTap == null ? null : () => onTap!(movie),
+          );
         },
       ),
     );
@@ -378,138 +392,142 @@ class _MovieHorizontalList extends StatelessWidget {
 
 class _MovieCard extends ConsumerWidget {
   final MovieLocal movie;
+  final VoidCallback? onTap;
 
-  const _MovieCard({required this.movie});
+  const _MovieCard({required this.movie, this.onTap});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
-    return Container(
-      width: 130,
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 🎬 Poster + overlay actions
-          Expanded(
-            child: Stack(
-              children: [
-                // Poster image
-                Positioned.fill(
-                  child:
-                      movie.posterPath.isNotEmpty
-                          ? Image.network(
-                            'https://image.tmdb.org/t/p/w342${movie.posterPath}',
-                            fit: BoxFit.cover,
-                          )
-                          : Container(
-                            color: colors.onSurface.withOpacity(0.1),
-                            child: const Center(
-                              child: Icon(Icons.movie_outlined),
-                            ),
-                          ),
-                ),
-
-                // 🗑️ Delete button overlay
-                Positioned(
-                  top: 6,
-                  right: 6,
-                  child: Material(
-                    color: Colors.black.withOpacity(0.55),
-                    shape: const CircleBorder(),
-                    child: InkWell(
-                      customBorder: const CircleBorder(),
-                      onTap: () async {
-                        final confirm = await showDialog<bool>(
-                          context: context,
-                          builder:
-                              (_) => AlertDialog(
-                                title: const Text('Remove movie?'),
-                                content: const Text(
-                                  'This will permanently remove it from your history.',
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed:
-                                        () => Navigator.pop(context, false),
-                                    child: const Text('Cancel'),
-                                  ),
-                                  TextButton(
-                                    onPressed:
-                                        () => Navigator.pop(context, true),
-                                    child: const Text('Remove'),
-                                  ),
-                                ],
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        width: 130,
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 🎬 Poster + overlay actions
+            Expanded(
+              child: Stack(
+                children: [
+                  // Poster image
+                  Positioned.fill(
+                    child:
+                        movie.posterPath.isNotEmpty
+                            ? Image.network(
+                              'https://image.tmdb.org/t/p/w342${movie.posterPath}',
+                              fit: BoxFit.cover,
+                            )
+                            : Container(
+                              color: colors.onSurface.withValues(alpha: 0.1),
+                              child: const Center(
+                                child: Icon(Icons.movie_outlined),
                               ),
-                        );
+                            ),
+                  ),
 
-                        if (confirm == true) {
-                          final movieRepo = MovieRepository();
-                          await movieRepo.deleteWatchedMovie(movie.tmdbId);
-                          ref.invalidate(movieListProvider);
-                        }
-                      },
-                      child: const Padding(
-                        padding: EdgeInsets.all(6),
-                        child: Icon(
-                          Icons.delete_outline,
-                          size: 18,
-                          color: Colors.redAccent,
+                  // 🗑️ Delete button overlay
+                  Positioned(
+                    top: 6,
+                    right: 6,
+                    child: Material(
+                      color: Colors.black.withValues(alpha: 0.55),
+                      shape: const CircleBorder(),
+                      child: InkWell(
+                        customBorder: const CircleBorder(),
+                        onTap: () async {
+                          final confirm = await showDialog<bool>(
+                            context: context,
+                            builder:
+                                (_) => AlertDialog(
+                                  title: const Text('Remove movie?'),
+                                  content: const Text(
+                                    'This will permanently remove it from your history.',
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed:
+                                          () => Navigator.pop(context, false),
+                                      child: const Text('Cancel'),
+                                    ),
+                                    TextButton(
+                                      onPressed:
+                                          () => Navigator.pop(context, true),
+                                      child: const Text('Remove'),
+                                    ),
+                                  ],
+                                ),
+                          );
+
+                          if (confirm == true) {
+                            final movieRepo = MovieRepository();
+                            await movieRepo.deleteWatchedMovie(movie.tmdbId);
+                            ref.invalidate(movieListProvider);
+                          }
+                        },
+                        child: const Padding(
+                          padding: EdgeInsets.all(6),
+                          child: Icon(
+                            Icons.delete_outline,
+                            size: 18,
+                            color: Colors.redAccent,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
 
-          // 📄 Details
-          Padding(
-            padding: const EdgeInsets.all(8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  movie.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    if (movie.releaseYear != null)
-                      Text(
-                        movie.releaseYear.toString(),
-                        style: theme.textTheme.bodySmall,
-                      ),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.star_rounded,
-                          size: 14,
-                          color: colors.secondary,
-                        ),
-                        const SizedBox(width: 2),
-                        Text(movie.rating.toStringAsFixed(1)),
-                      ],
+            // 📄 Details
+            Padding(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    movie.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
                     ),
-                  ],
-                ),
-              ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      if (movie.releaseYear != null)
+                        Text(
+                          movie.releaseYear.toString(),
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.star_rounded,
+                            size: 14,
+                            color: colors.secondary,
+                          ),
+                          const SizedBox(width: 2),
+                          Text(movie.rating.toStringAsFixed(1)),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

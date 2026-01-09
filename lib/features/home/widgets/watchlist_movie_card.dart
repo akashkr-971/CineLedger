@@ -40,7 +40,7 @@ class WatchlistMovieCard extends StatelessWidget {
                       fit: BoxFit.cover,
                     )
                     : Container(
-                      color: colors.onSurface.withOpacity(0.1),
+                      color: colors.onSurface.withValues(alpha: 0.1),
                       child: const Icon(Icons.movie_outlined),
                     ),
           ),
