@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../home/widgets/popular_movie_card.dart';
 import '../repositories/movie_repository.dart';
+import 'movie_details_page.dart';
 
 class ShowAllPopularMoviesPage extends StatelessWidget {
   final List<Map<String, dynamic>> movies;
@@ -28,6 +29,14 @@ class ShowAllPopularMoviesPage extends StatelessWidget {
             onAdd: () async {
               final repo = MovieRepository();
               await repo.addToWatchlistFromTmdb(movie);
+            },
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => MovieDetailsPage(tmdbId: movie['id']),
+                ),
+              );
             },
           );
         },

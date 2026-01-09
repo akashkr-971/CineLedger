@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'movie_list_provider.dart';
 import 'movie_details_provider.dart';
+import '../home/widgets/rate_movie_sheet.dart';
+import '../repositories/movie_repository.dart';
 
 class MovieDetailsPage extends ConsumerWidget {
   final int tmdbId;
@@ -155,8 +157,31 @@ class MovieDetailsPage extends ConsumerWidget {
                     width: double.infinity,
                     child: ElevatedButton(
                       child: const Text('Mark as Watched'),
-                      onPressed: () {
-                        // reuse your rating sheet
+                      onPressed: () async {
+                        final updated = await showModalBottomSheet<bool>(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder:
+                              (_) => RateMovieSheet(
+                                movie: movie,
+                                onSave: (rating, note) async {
+                                  final movieRepo = MovieRepository();
+                                  await movieRepo.markAsWatched(
+                                    movie: movie,
+                                    rating: rating,
+                                    note: note,
+                                  );
+                                },
+                              ),
+                        );
+
+                        if (updated == true) {
+                          print('Sheet result: $updated');
+                          ref.invalidate(movieListProvider);
+                          ref.invalidate(movieDetailsProvider(tmdbId));
+                          Navigator.pop(context);
+                        }
                       },
                     ),
                   ),
