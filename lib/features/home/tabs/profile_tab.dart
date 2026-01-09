@@ -4,6 +4,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/theme/theme_provider.dart';
 import '../user_profile_provider.dart';
 import '../../repositories/user_repository.dart';
+import '../../repositories/movie_local_repository.dart';
+import '../../movies/popular_movies_provider.dart';
+import '../../movies/movie_list_provider.dart';
+import '../../auth/auth_providers.dart';
+import '../home_screen.dart';
 
 class ProfileTab extends ConsumerWidget {
   const ProfileTab({super.key});
@@ -201,7 +206,14 @@ class ProfileTab extends ConsumerWidget {
             title: 'Log Out',
             isDestructive: true,
             onTap: () async {
+              final localRepo = MovieLocalRepository();
+              await localRepo.clearAll();
               await FirebaseAuth.instance.signOut();
+              ref.invalidate(movieListProvider);
+              ref.read(homeTabProvider.notifier).state = 0;
+              ref.invalidate(popularMoviesProvider);
+              ref.invalidate(authStateProvider);
+              // ❌ NO Navigator.push / pop / replace here
             },
           ),
 

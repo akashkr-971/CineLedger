@@ -83,6 +83,7 @@ class MovieRepository {
   }
 
   Future<void> syncFromFirestoreToLocal() async {
+    print("Sync called");
     final user = _auth.currentUser;
     if (user == null) return;
 

@@ -69,4 +69,13 @@ class MovieLocalRepository {
     final box = await _openBox();
     await box.delete(tmdbId);
   }
+
+  Future<void> clearAll() async {
+    if (Hive.isBoxOpen(_boxName)) {
+      await Hive.box<MovieLocal>(_boxName).clear();
+    }
+    if (Hive.isBoxOpen(_popularBox)) {
+      await Hive.box(_popularBox).clear();
+    }
+  }
 }

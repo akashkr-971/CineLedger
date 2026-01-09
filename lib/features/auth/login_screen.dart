@@ -4,7 +4,6 @@ import 'auth_providers.dart';
 import 'signup_screen.dart';
 import '../../core/widgets/cine_input_field.dart';
 import '../../core/widgets/cine_snack_bar.dart';
-import 'verify_email.dart';
 import '../repositories/user_repository.dart';
 
 class LoginScreen extends ConsumerWidget {
@@ -112,20 +111,8 @@ class LoginScreen extends ConsumerWidget {
                                         context,
                                         'Please verify your email before logging in.',
                                       );
-
-                                      await Future.delayed(
-                                        const Duration(seconds: 3),
-                                      );
-                                      if (!context.mounted) return;
-                                      Navigator.of(context).pushReplacement(
-                                        MaterialPageRoute(
-                                          builder:
-                                              (_) => VerifyEmailScreen(
-                                                email: email,
-                                                name: user.displayName ?? '',
-                                              ),
-                                        ),
-                                      );
+                                      // ❌ NO NAVIGATION HERE
+                                      // authStateProvider will show VerifyEmailScreen automatically
                                       return;
                                     }
 
@@ -142,7 +129,6 @@ class LoginScreen extends ConsumerWidget {
                                     );
                                   }
                                 },
-
                                 child: const Text(
                                   'Log In',
                                   style: TextStyle(
