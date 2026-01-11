@@ -42,4 +42,18 @@ class MovieSearchService {
 
     return results;
   }
+
+  Future<Map<String, dynamic>> getMovieDetails(int tmdbId) async {
+    final uri = Uri.parse(
+      'https://api.themoviedb.org/3/movie/$tmdbId',
+    ).replace(queryParameters: {'api_key': _apiKey, 'language': 'en-US'});
+
+    final response = await http.get(uri);
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to fetch movie details');
+    }
+
+    return json.decode(response.body) as Map<String, dynamic>;
+  }
 }

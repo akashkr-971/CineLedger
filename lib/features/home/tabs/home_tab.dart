@@ -232,7 +232,6 @@ class HomeTab extends ConsumerWidget {
                                   ref.invalidate(movieListProvider);
                                 },
                                 onTap: () {
-                                  print('movie id: ${movie['id']}');
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(

@@ -135,7 +135,6 @@ class _RateMovieSheetState extends State<RateMovieSheet> {
                   await widget.onSave(rating, noteController.text.trim());
 
                   if (context.mounted) {
-                    print('Saving movie & closing sheet');
                     Navigator.pop(context, true);
                   }
                 },

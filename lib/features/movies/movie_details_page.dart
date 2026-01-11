@@ -54,14 +54,12 @@ class MovieDetailsPage extends ConsumerWidget {
                           )
                           : Container(
                             height: 420,
-                            color: colors.surfaceVariant,
+                            color: colors.surfaceContainerHighest,
                             child: const Icon(Icons.movie_outlined, size: 64),
                           ),
                 ),
 
                 const SizedBox(height: 24),
-
-                // 🎞 Title
                 Text(
                   movie.title,
                   style: theme.textTheme.headlineSmall?.copyWith(
@@ -71,7 +69,6 @@ class MovieDetailsPage extends ConsumerWidget {
 
                 const SizedBox(height: 8),
 
-                // 📅 Year + status
                 Wrap(
                   crossAxisAlignment: WrapCrossAlignment.center,
                   spacing: 20,
@@ -177,24 +174,9 @@ class MovieDetailsPage extends ConsumerWidget {
                         );
 
                         if (updated == true) {
-                          print('Sheet result: $updated');
                           ref.invalidate(movieListProvider);
                           ref.invalidate(movieDetailsProvider(tmdbId));
-                          Navigator.pop(context);
                         }
-                      },
-                    ),
-                  ),
-
-                if (!movie.watched && !movie.inWatchlist)
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      child: const Text('Add to Watchlist'),
-                      onPressed: () async {
-                        // await movieRepo.addToWatchlistFromLocal(movie);
-                        ref.invalidate(movieListProvider);
-                        Navigator.pop(context);
                       },
                     ),
                   ),

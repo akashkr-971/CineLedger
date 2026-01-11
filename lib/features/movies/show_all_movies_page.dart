@@ -153,6 +153,7 @@ class _ShowAllMoviesPageState extends ConsumerState<ShowAllMoviesPage> {
                                         movie.tmdbId,
                                       );
                                       ref.invalidate(movieListProvider);
+                                      
                                     }
                                   }
                                   : null,
