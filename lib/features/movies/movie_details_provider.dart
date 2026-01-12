@@ -10,7 +10,6 @@ final movieDetailsProvider = FutureProvider.family<MovieLocal?, int>((
 ) async {
   final user = FirebaseAuth.instance.currentUser;
 
-  // 1️⃣ Try Firebase first (user movies)
   if (user != null) {
     final doc =
         await FirebaseFirestore.instance
