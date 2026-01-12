@@ -59,7 +59,6 @@ class _ShowAllMoviesPageState extends ConsumerState<ShowAllMoviesPage> {
       appBar: AppBar(title: Text(widget.title)),
       body: Column(
         children: [
-          // 🔍 Search bar
           Padding(
             padding: const EdgeInsets.all(16),
             child: TextField(
@@ -76,8 +75,6 @@ class _ShowAllMoviesPageState extends ConsumerState<ShowAllMoviesPage> {
               ),
             ),
           ),
-
-          // 🎬 Grid
           Expanded(
             child:
                 _filteredMovies.isEmpty
